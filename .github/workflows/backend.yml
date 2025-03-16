@@ -1,1 +1,53 @@
 
+name: Backend CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run tests
+      run: |
+        pytest
+
+    - name: SonarQube Analysis
+      uses: SonarSource/sonarcloud-github-action@v1
+      with:
+        sonarcloud_token: ${{ secrets.SONAR_TOKEN }}
+      env:
+        SONAR_SCANNER_OPTS: "-Xmx2G"
+      run: |
+        sonar-scanner
+
+  snyk:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install SNYK
+      run: pip install snyk
+
+    - name: Test for vulnerabilities using SNYK
+      run: snyk test
